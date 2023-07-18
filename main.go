@@ -9,18 +9,21 @@ import (
 	"strings"
 
 	"github.com/projectdiscovery/goflags"
+	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/gologger/levels"
 	fileUtil "github.com/projectdiscovery/utils/file"
 	sliceUtil "github.com/projectdiscovery/utils/slice"
 )
 
 type Options struct {
-	list             string
-	parameters       string
-	chunk            int
-	values           goflags.StringSlice
-	generateStrategy goflags.StringSlice
-	valueStrategy    string
-	output           string
+	list               string
+	parameters         string
+	chunk              int
+	values             goflags.StringSlice
+	generationStrategy goflags.StringSlice
+	valueStrategy      string
+	output             string
+	doubleEncode       bool
 }
 
 var options *Options
@@ -31,13 +34,13 @@ func main() {
 	params := getParams()
 
 	var output []string
-	if sliceUtil.Contains(options.generateStrategy, "normal") {
+	if sliceUtil.Contains(options.generationStrategy, "normal") {
 		output = append(output, normalStrat(urls, params)...)
 	}
-	if sliceUtil.Contains(options.generateStrategy, "combine") {
+	if sliceUtil.Contains(options.generationStrategy, "combine") {
 		output = append(output, combineStrat(urls)...)
 	}
-	if sliceUtil.Contains(options.generateStrategy, "ignore") {
+	if sliceUtil.Contains(options.generationStrategy, "ignore") {
 		output = append(output, ignoreStrat(urls, params)...)
 	}
 
@@ -47,22 +50,23 @@ func main() {
 
 func ParseOptions() *Options {
 	options := &Options{}
+	gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
 
 	flags := goflags.NewFlagSet()
 	flags.SetDescription("A tool designed for URL modification with specific modes to manipulate parameters and their values")
 
-	flags.StringVarP(&options.list, "list", "l", "", "List of URLS to edit")
+	flags.StringVarP(&options.list, "list", "l", "", "List of URLS to edit (stdin could be used alternatively)")
 	flags.StringVarP(&options.parameters, "parameters", "p", "", "Paramter wordlist")
 	flags.IntVarP(&options.chunk, "chunk", "c", 15, "Number of parameters in each URL")
 	flags.StringSliceVarP(&options.values, "value", "v", nil, "Value for the parameters", goflags.StringSliceOptions)
 
-	generateStrategyHelp := `
+	generationStrategyHelp := `
 	Select the mode strategy from the available choices:
 					normal:  Remove all parameters and put the wordlist
 					combine: Pitchfork combine on the existing parameters
 					ignore:  Don't touch the URL and append the paramters to the URL
 				`
-	flags.StringSliceVarP(&options.generateStrategy, "generate-strategy", "gs", nil, generateStrategyHelp, goflags.CommaSeparatedStringSliceOptions)
+	flags.StringSliceVarP(&options.generationStrategy, "generate-strategy", "gs", nil, generationStrategyHelp, goflags.CommaSeparatedStringSliceOptions)
 
 	valueStrategyHelp := `Select the strategy from the available choices:
 					replace: Replace the current URL values with the given values
@@ -71,16 +75,48 @@ func ParseOptions() *Options {
 	flags.StringVarP(&options.valueStrategy, "value-strategy", "vs", "suffix", valueStrategyHelp)
 
 	flags.StringVarP(&options.output, "output", "o", "", "File to write output results")
+	flags.BoolVarP(&options.doubleEncode, "double-encode", "de", false, "Double encode the values")
 
 	if err := flags.Parse(); err != nil {
-		panic(err)
+		gologger.Fatal().Msg(err.Error())
+	}
+
+	if err := options.validateOptions(); err != nil {
+		gologger.Fatal().Msg(err.Error())
 	}
 
 	return options
 }
 
 func (options *Options) validateOptions() error {
-	// to be implemented
+	/*
+		// check if output file already exists
+		if fileUtil.FileExists(options.output) && options.output != "" {
+			return fmt.Errorf("Output file already exists")
+		}
+
+		// check if value strategy is not valid
+		if options.valueStrategy != "replace" && options.valueStrategy != "suffix" {
+			return fmt.Errorf("Value strategy is not valid")
+		}
+
+		// check if url file does not exist
+		if !fileUtil.FileExists(options.list) && options.list != "" {
+			return fmt.Errorf("URL list does not exist")
+		}
+
+		// check if parameter file does not exist
+		if !fileUtil.FileExists(options.parameters) && options.parameters != "" {
+			return fmt.Errorf("Parameter wordlist file does not exist")
+		}
+
+		// check if generation strategy is valid
+		if !sliceUtil.Contains(options.generationStrategy, "combine") &&
+			!sliceUtil.Contains(options.generationStrategy, "ignore") &&
+			!sliceUtil.Contains(options.generationStrategy, "normal") {
+			return fmt.Errorf("Generation strategy is not valid")
+		}
+	*/
 	return nil
 }
 
@@ -90,7 +126,7 @@ func writeOutput(urls []string) {
 	if options.output != "" {
 		outputFile, err := os.OpenFile(options.output, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 		if err != nil {
-			panic(err)
+			gologger.Fatal().Msg(err.Error())
 		}
 		defer outputFile.Close()
 
@@ -106,7 +142,7 @@ func getParams() []string {
 
 	ch, err := fileUtil.ReadFile(options.parameters)
 	if err != nil {
-		panic(err)
+		gologger.Fatal().Msg(err.Error())
 	}
 	for param := range ch {
 		params = append(params, param)
@@ -122,7 +158,7 @@ func getUrls() []string {
 	if options.list != "" {
 		ch, err := fileUtil.ReadFile(options.list)
 		if err != nil {
-			panic(err)
+			gologger.Fatal().Msg(err.Error())
 		}
 		for url := range ch {
 			urls = append(urls, url)
@@ -133,7 +169,7 @@ func getUrls() []string {
 			urls = append(urls, strings.TrimSpace(scanner.Text()))
 		}
 		if err := scanner.Err(); err != nil {
-			panic(err)
+			gologger.Fatal().Msg(err.Error())
 		}
 	}
 
@@ -147,7 +183,7 @@ func combineStrat(urls []string) []string {
 		// parse each url
 		parsedUrl, err := url.Parse(singleUrl)
 		if err != nil {
-			panic(err)
+			gologger.Fatal().Msg(err.Error())
 		}
 		queryParams := parsedUrl.Query()
 		numOfOldParams := len(queryParams)
@@ -159,6 +195,11 @@ func combineStrat(urls []string) []string {
 		}
 
 		for _, singeValue := range options.values {
+			// double encode the value if the flag is set
+			if options.doubleEncode {
+				singeValue = url.QueryEscape(singeValue)
+			}
+
 			// each iteration contains a url with the number of parameters provided by the chunk size flag
 			for iteration := 0; iteration < numOfOldParams; iteration++ {
 				newQueryParams := url.Values{}
@@ -167,6 +208,7 @@ func combineStrat(urls []string) []string {
 				for _, key := range oldKeys {
 					newQueryParams.Set(key, queryParams.Get(key))
 				}
+
 				// modify one parameter in each iteration
 				if options.valueStrategy == "replace" {
 					newQueryParams.Set(oldKeys[iteration], singeValue)
@@ -190,7 +232,7 @@ func ignoreStrat(urls []string, params []string) []string {
 		// parse each url
 		parsedUrl, err := url.Parse(singleUrl)
 		if err != nil {
-			panic(err)
+			gologger.Fatal().Msg(err.Error())
 		}
 		queryParams := parsedUrl.Query()
 		numOfOldParams := len(queryParams)
@@ -201,21 +243,30 @@ func ignoreStrat(urls []string, params []string) []string {
 		for keys := range queryParams {
 			oldKeys = append(oldKeys, keys)
 		}
+		newKeys, _ := sliceUtil.Diff(params, oldKeys)
 
 		for _, singeValue := range options.values {
-			newKeys, _ := sliceUtil.Diff(params, oldKeys)
+			// get a copy of new parameters to use with pop in each iteration
+			newKeysCopy := make([]string, len(newKeys))
+			copy(newKeysCopy, newKeys)
+
+			// double encode the value if the flag is set
+			if options.doubleEncode {
+				singeValue = url.QueryEscape(singeValue)
+			}
+
 			// each iteration contains a url with the number of parameters provided by the chunk size flag
 			for iteration := 0; iteration < numOfIterations; iteration++ {
 				newQueryParams := url.Values{}
 
 				// add old parameters
-				for key, value := range queryParams {
-					newQueryParams.Set(key, value[len(value)-1])
+				for key := range queryParams {
+					newQueryParams.Set(key, queryParams.Get(key))
 				}
 
 				// add new paramters
-				for paramNum := 0; paramNum < options.chunk-numOfOldParams && len(newKeys) > 0; paramNum++ {
-					newQueryParams.Set(pop(&newKeys), singeValue)
+				for paramNum := 0; paramNum < options.chunk-numOfOldParams && len(newKeysCopy) > 0; paramNum++ {
+					newQueryParams.Set(pop(&newKeysCopy), singeValue)
 				}
 
 				parsedUrl.RawQuery = newQueryParams.Encode()
@@ -234,7 +285,7 @@ func normalStrat(urls []string, params []string) []string {
 		// parse each url
 		parsedUrl, err := url.Parse(singleUrl)
 		if err != nil {
-			panic(err)
+			gologger.Fatal().Msg(err.Error())
 		}
 		queryParams := parsedUrl.Query()
 		numOfOldParams := len(queryParams)
@@ -245,9 +296,18 @@ func normalStrat(urls []string, params []string) []string {
 		for keys := range queryParams {
 			oldKeys = append(oldKeys, keys)
 		}
+		newKeys, _ := sliceUtil.Diff(params, oldKeys)
 
 		for _, singeValue := range options.values {
-			newKeys, _ := sliceUtil.Diff(params, oldKeys)
+			// get a copy of new parameters to use with pop in each iteration
+			newKeysCopy := make([]string, len(newKeys))
+			copy(newKeysCopy, newKeys)
+
+			// double encode the value if the flag is set
+			if options.doubleEncode {
+				singeValue = url.QueryEscape(singeValue)
+			}
+
 			// each iteration contains a url with the number of parameters provided by the chunk size flag
 			for iteration := 0; iteration < numOfIterations; iteration++ {
 				newQueryParams := url.Values{}
@@ -258,8 +318,8 @@ func normalStrat(urls []string, params []string) []string {
 				}
 
 				// add new paramters
-				for paramNum := 0; paramNum < options.chunk-numOfOldParams && len(newKeys) > 0; paramNum++ {
-					newQueryParams.Set(pop(&newKeys), singeValue)
+				for paramNum := 0; paramNum < options.chunk-numOfOldParams && len(newKeysCopy) > 0; paramNum++ {
+					newQueryParams.Set(pop(&newKeysCopy), singeValue)
 				}
 
 				parsedUrl.RawQuery = newQueryParams.Encode()
@@ -279,7 +339,7 @@ func newParamsOnlyStrat(urls []string, params []string) []string {
 		// parse each url
 		parsedUrl, err := url.Parse(singleUrl)
 		if err != nil {
-			panic(err)
+			gologger.Fatal().Msg(err.Error())
 		}
 
 		// get the base url (without the params and values)
@@ -288,7 +348,7 @@ func newParamsOnlyStrat(urls []string, params []string) []string {
 		// parse the base url
 		parsedUrl, err = url.Parse(baseUrl)
 		if err != nil {
-			panic(err)
+			gologger.Fatal().Msg(err.Error())
 		}
 		for _, singeValue := range options.values {
 			newKeys := params
