@@ -56,7 +56,7 @@ func ParseOptions() *Options {
 	flags.SetDescription("A tool designed for URL modification with specific modes to manipulate parameters and their values")
 
 	flags.StringVarP(&options.list, "list", "l", "", "List of URLS to edit (stdin could be used alternatively)")
-	flags.StringVarP(&options.parameters, "parameters", "p", "", "Paramter wordlist")
+	flags.StringVarP(&options.parameters, "parameters", "p", "", "Parameter wordlist")
 	flags.IntVarP(&options.chunk, "chunk", "c", 15, "Number of parameters in each URL")
 	flags.StringSliceVarP(&options.values, "value", "v", nil, "Value for the parameters", goflags.StringSliceOptions)
 
@@ -64,7 +64,7 @@ func ParseOptions() *Options {
 	Select the mode strategy from the available choices:
 					normal:  Remove all parameters and put the wordlist
 					combine: Pitchfork combine on the existing parameters
-					ignore:  Don't touch the URL and append the paramters to the URL
+					ignore:  Don't touch the URL and append the parameters to the URL
 				`
 	flags.StringSliceVarP(&options.generationStrategy, "generate-strategy", "gs", nil, generationStrategyHelp, goflags.CommaSeparatedStringSliceOptions)
 
@@ -278,7 +278,7 @@ func ignoreStrat(urls []string, params []string) []string {
 					newQueryParams.Set(key, queryParams.Get(key))
 				}
 
-				// add new paramters
+				// add new parameters
 				for paramNum := 0; paramNum < options.chunk-numOfOldParams && len(newKeysCopy) > 0; paramNum++ {
 					newQueryParams.Set(pop(&newKeysCopy), singeValue)
 				}
@@ -331,7 +331,7 @@ func normalStrat(urls []string, params []string) []string {
 					newQueryParams.Set(key, singeValue)
 				}
 
-				// add new paramters
+				// add new parameters
 				for paramNum := 0; paramNum < options.chunk-numOfOldParams && len(newKeysCopy) > 0; paramNum++ {
 					newQueryParams.Set(pop(&newKeysCopy), singeValue)
 				}
