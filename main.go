@@ -89,34 +89,48 @@ func ParseOptions() *Options {
 }
 
 func (options *Options) validateOptions() error {
-	/*
-		// check if output file already exists
-		if fileUtil.FileExists(options.output) && options.output != "" {
-			return fmt.Errorf("Output file already exists")
-		}
+	// check if no urls were given
+	if !fileUtil.HasStdin() && options.list == "" {
+		return fmt.Errorf("No URLs were given")
+	}
 
-		// check if value strategy is not valid
-		if options.valueStrategy != "replace" && options.valueStrategy != "suffix" {
-			return fmt.Errorf("Value strategy is not valid")
-		}
+	// check if output file already exists
+	if fileUtil.FileExists(options.output) && options.output != "" {
+		return fmt.Errorf("Output file already exists")
+	}
 
-		// check if url file does not exist
-		if !fileUtil.FileExists(options.list) && options.list != "" {
-			return fmt.Errorf("URL list does not exist")
-		}
+	// check if url file does not exist
+	if !fileUtil.FileExists(options.list) && options.list != "" {
+		return fmt.Errorf("URL list does not exist")
+	}
 
-		// check if parameter file does not exist
-		if !fileUtil.FileExists(options.parameters) && options.parameters != "" {
-			return fmt.Errorf("Parameter wordlist file does not exist")
-		}
+	// check if no parameter file is given
+	if options.parameters == "" {
+		return fmt.Errorf("Parameter wordlist file is not given")
+	}
 
-		// check if generation strategy is valid
-		if !sliceUtil.Contains(options.generationStrategy, "combine") &&
-			!sliceUtil.Contains(options.generationStrategy, "ignore") &&
-			!sliceUtil.Contains(options.generationStrategy, "normal") {
-			return fmt.Errorf("Generation strategy is not valid")
-		}
-	*/
+	// check if parameter file does not exist
+	if !fileUtil.FileExists(options.parameters) && options.parameters != "" {
+		return fmt.Errorf("Parameter wordlist file does not exist")
+	}
+
+	// check if value strategy is not valid
+	if options.valueStrategy != "replace" && options.valueStrategy != "suffix" {
+		return fmt.Errorf("Value strategy is not valid")
+	}
+
+	// check if generation strategy is valid
+	if !sliceUtil.Contains(options.generationStrategy, "combine") &&
+		!sliceUtil.Contains(options.generationStrategy, "ignore") &&
+		!sliceUtil.Contains(options.generationStrategy, "normal") {
+		return fmt.Errorf("Generation strategy is not valid")
+	}
+
+	// check if no value is given
+	if options.values == nil {
+		return fmt.Errorf("No values are given")
+	}
+
 	return nil
 }
 
