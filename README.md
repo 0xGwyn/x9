@@ -1,6 +1,12 @@
 # Installation
-```
+```bash
 go install github.com/0xgwyn/x9@latest
+```
+or
+```bash
+git clone https://github.com/0xGwyn/x9.git 
+cd x9
+go build -o $GOPATH/bin/x8 main.go
 ```
 # Usage 
 ```bash
@@ -40,7 +46,7 @@ param10
 ```
 
 ### Normal mode 
-Replaces all values with new provided values
+Replaces all values with the new provided values
 ```bash
 echo "https://domain.tld/test/rot?pa1=val1&pa2=val2" | x9 -p paramsFile -gs normal -v newVal1 -v newVal2 -c 4
 
@@ -52,7 +58,7 @@ https://domain.tld/test/rot?pa1=newVal2&pa2=newVal2&paramP1=newVal2&paramP2=newV
 
 
 ### Ignore mode 
-Leaves default params their values unchanged and adds new params with new values
+Leaves default params their values unchanged and adds new params with the new values
 ```bash
 echo "https://domain.tld/test/rot?pa1=val1&pa2=val2" | x9 -p paramsFile -gs ignore -v newVal1 -v newVal2 -c 7
 
@@ -64,7 +70,7 @@ https://domain.tld/test/rot?pa1=val1&pa2=val2&paramP1=newVal2&paramP2=newVal2&pa
 
 
 ### Combine mode 
-Replaces all values with new provided values
+For each parameter in each url, either replaces the value completely or appends the new provided value as a suffix
 
 with replace flag:
 ```bash
