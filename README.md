@@ -48,7 +48,7 @@ param10
 ### Normal mode 
 Replaces all values with the new provided values
 ```bash
-echo "https://domain.tld/test/rot?pa1=val1&pa2=val2" | x9 -p paramsFile -gs normal -v newVal1 -v newVal2 -c 4
+echo "https://domain.tld/test/rot?pa1=val1&pa2=val2" | x9 -p paramsFile -gs normal -v newVal1 -v newVal2 -c 7
 
 https://domain.tld/test/rot?pa1=newVal1&pa2=newVal1&paramP10=newVal1&paramP6=newVal1&paramP7=newVal1&paramP8=newVal1&paramP9=newVal1
 https://domain.tld/test/rot?pa1=newVal1&pa2=newVal1&paramP1=newVal1&paramP2=newVal1&paramP3=newVal1&paramP4=newVal1&paramP5=newVal1
