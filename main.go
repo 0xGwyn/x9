@@ -249,8 +249,6 @@ func ignoreStrat(urls []string, params []string) []string {
 			gologger.Fatal().Msg(err.Error())
 		}
 		queryParams := parsedUrl.Query()
-		numOfOldParams := len(queryParams)
-		numOfIterations := int(math.Ceil(float64(len(params)) / float64(options.chunk-numOfOldParams)))
 
 		// only get new parameters so we don't accidentally override the current params
 		oldKeys := []string{}
@@ -258,6 +256,10 @@ func ignoreStrat(urls []string, params []string) []string {
 			oldKeys = append(oldKeys, keys)
 		}
 		newKeys, _ := sliceUtil.Diff(params, oldKeys)
+
+		// number of iteration is equivalent to the number of URLs being generated for each value
+		numOfOldParams := len(queryParams)
+		numOfIterations := int(math.Ceil(float64(len(params)) / float64(options.chunk-numOfOldParams)))
 
 		for _, singeValue := range options.values {
 			// get a copy of new parameters to use with pop in each iteration
@@ -302,37 +304,34 @@ func normalStrat(urls []string, params []string) []string {
 			gologger.Fatal().Msg(err.Error())
 		}
 		queryParams := parsedUrl.Query()
-		numOfOldParams := len(queryParams)
-		numOfIterations := int(math.Ceil(float64(len(params)) / float64(options.chunk-numOfOldParams)))
 
 		// only get new parameters so we don't accidentally override the current params
 		oldKeys := []string{}
 		for keys := range queryParams {
 			oldKeys = append(oldKeys, keys)
 		}
-		newKeys, _ := sliceUtil.Diff(params, oldKeys)
+		uniqueNewKeys, uniqueOldKeys := sliceUtil.Diff(params, oldKeys)
+
+		// number of iteration is equivalent to the number of URLs being generated for each value
+		numOfIterations := int(math.Ceil(float64(len(uniqueNewKeys)+len(uniqueOldKeys)) / float64(options.chunk)))
 
 		for _, singeValue := range options.values {
 			// get a copy of new parameters to use with pop in each iteration
-			newKeysCopy := make([]string, len(newKeys))
-			copy(newKeysCopy, newKeys)
+			newKeysCopy := make([]string, len(uniqueNewKeys))
+			copy(newKeysCopy, uniqueNewKeys)
 
 			// double encode the value if the flag is set
 			if options.doubleEncode {
 				singeValue = url.QueryEscape(singeValue)
 			}
+			newKeysCopy = append(newKeysCopy, oldKeys...)
 
 			// each iteration contains a url with the number of parameters provided by the chunk size flag
 			for iteration := 0; iteration < numOfIterations; iteration++ {
 				newQueryParams := url.Values{}
 
-				// add old parameters
-				for key := range queryParams {
-					newQueryParams.Set(key, singeValue)
-				}
-
 				// add new parameters
-				for paramNum := 0; paramNum < options.chunk-numOfOldParams && len(newKeysCopy) > 0; paramNum++ {
+				for paramNum := 0; paramNum < options.chunk && len(newKeysCopy) > 0; paramNum++ {
 					newQueryParams.Set(pop(&newKeysCopy), singeValue)
 				}
 
