@@ -51,9 +51,9 @@ Replaces all the values with the new provided values
 echo "https://domain.tld/test/rot?pa1=val1&pa2=val2" | x9 -p paramsFile -gs normal -v newVal1 -v newVal2 -c 7
 
 https://domain.tld/test/rot?pa1=newVal1&pa2=newVal1&paramP10=newVal1&paramP6=newVal1&paramP7=newVal1&paramP8=newVal1&paramP9=newVal1
-https://domain.tld/test/rot?pa1=newVal1&pa2=newVal1&paramP1=newVal1&paramP2=newVal1&paramP3=newVal1&paramP4=newVal1&paramP5=newVal1
+https://domain.tld/test/rot?paramP1=newVal1&paramP2=newVal1&paramP3=newVal1&paramP4=newVal1&paramP5=newVal1
 https://domain.tld/test/rot?pa1=newVal2&pa2=newVal2&paramP10=newVal2&paramP6=newVal2&paramP7=newVal2&paramP8=newVal2&paramP9=newVal2
-https://domain.tld/test/rot?pa1=newVal2&pa2=newVal2&paramP1=newVal2&paramP2=newVal2&paramP3=newVal2&paramP4=newVal2&paramP5=newVal2
+https://domain.tld/test/rot?paramP1=newVal2&paramP2=newVal2&paramP3=newVal2&paramP4=newVal2&paramP5=newVal2
 ```
 
 
