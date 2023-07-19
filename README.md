@@ -46,7 +46,7 @@ param10
 ```
 
 ### Normal mode 
-Replaces all values with the new provided values
+Replaces all the values with the new provided values
 ```bash
 echo "https://domain.tld/test/rot?pa1=val1&pa2=val2" | x9 -p paramsFile -gs normal -v newVal1 -v newVal2 -c 7
 
@@ -58,7 +58,7 @@ https://domain.tld/test/rot?pa1=newVal2&pa2=newVal2&paramP1=newVal2&paramP2=newV
 
 
 ### Ignore mode 
-Leaves default params their values unchanged and adds new params with the new values
+Leaves default params and their values unchanged and adds new params with the new values
 ```bash
 echo "https://domain.tld/test/rot?pa1=val1&pa2=val2" | x9 -p paramsFile -gs ignore -v newVal1 -v newVal2 -c 7
 
