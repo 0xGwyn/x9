@@ -93,5 +93,5 @@ https://domain.tld/test/rot?pa1=val1&pa2=val2newVal2
 
 # Notes
 1. Multiple modes could be provided as comma-separated values (-gs combine,ignore,normal)
-2. Each values should be provided separately (-v value1 -v value2)
+2. Each value should be provided separately (-v value1 -v value2)
 
