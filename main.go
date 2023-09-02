@@ -104,8 +104,8 @@ func (options *Options) validateOptions() error {
 		return fmt.Errorf("URL list does not exist")
 	}
 
-	// check if no parameter file is given
-	if options.parameters == "" {
+	// check if no parameter file is given (ignore this for combine mode)
+	if options.parameters == "" && !(len(options.generationStrategy) == 1 && sliceUtil.Contains(options.generationStrategy, "combine")) {
 		return fmt.Errorf("Parameter wordlist file is not given")
 	}
 
@@ -153,6 +153,10 @@ func writeOutput(urls []string) {
 
 func getParams() []string {
 	params := []string{}
+
+	if len(options.generationStrategy) == 1 && sliceUtil.Contains(options.generationStrategy, "combine") {
+		return params
+	}
 
 	ch, err := fileUtil.ReadFile(options.parameters)
 	if err != nil {
